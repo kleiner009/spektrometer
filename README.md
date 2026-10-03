@@ -47,7 +47,7 @@ Für Vergleiche im Unterricht gut geeignet, **kein Messgerät** im Sinne einer P
 ## Nachbauen
 
 1. **Teile besorgen:** siehe [KAUFLISTE.md](KAUFLISTE.md)
-2. **Drucken:** Grundplatte und Halter nach dem Raster-Grundplatten-System RGS, siehe [hardware/](hardware/)
+2. **Drucken:** Grundplatte, Halter und Spaltkappe, siehe [hardware/](hardware/)
 3. **Raspberry Pi OS installieren** (64 Bit, mit Desktop, Trixie oder Bookworm), SSH/WLAN nach Bedarf
 4. **Software installieren:**
    ```bash
@@ -93,7 +93,7 @@ Grau gezeichnete Kurventeile liegen außerhalb des kalibrierten Bereichs und geh
 ```
 software/   Programm (spektrometer.py, kamera.py, kalibrierung.py, beamer.py, …)
 system/     Vorlagen: labwc-Fensterregeln/Touch, kanshi-Bildschirmprofile
-hardware/   Druckdateien (3MF, Fusion 360 f3d) und RGS-Zeichnungen
+hardware/   Druckdateien (3MF, Fusion 360 f3d) und Aufbauhinweise
 install.sh  Installation auf dem Raspberry Pi
 ```
 

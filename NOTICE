@@ -13,8 +13,8 @@ Geänderte Dateien aus PySpectrometer2 (mit Änderungshinweis im Dateikopf):
   software/specFunctions.py
 
 Alle übrigen Dateien (kamera.py, kalibrierung.py, beamer.py, zuschnitt.py,
-touch_kalibrierung.py, install.sh, Systemdateien, Druckdateien und Zeichnungen
-des Raster-Grundplatten-Systems RGS) sind eigene Arbeiten.
+touch_kalibrierung.py, install.sh, Systemdateien und Druckdateien)
+sind eigene Arbeiten.
 
 Verwendete Bibliotheken (eigene Lizenzen): Picamera2 (BSD-2-Clause),
 OpenCV (Apache-2.0), NumPy (BSD-3-Clause), Pillow (MIT-CMU),

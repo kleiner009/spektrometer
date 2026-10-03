@@ -29,13 +29,12 @@ Alles, was für einen Nachbau gebraucht wird. Preise schwanken, deshalb stehen h
 | Glühlampe 60–100 W, klar, E27 + Fassung | Referenz (Planck-Strahler) für die Empfindlichkeitskorrektur; ohne Dimmer betreiben | 5–10 | [Amazon\*](https://www.amazon.de/s?k=Gl%C3%BChbirne+100W+E27+klar&tag=johannesroe08-21) |
 | Weiße LED (z. B. Handylicht) | blauer Kalibrierpunkt (LED-Blauspitze ≈ 450 nm) | – | vorhanden |
 
-## Mechanik (3D-Druck, Raster-Grundplatten-System RGS)
+## Mechanik (3D-Druck)
 
 | Teil | Hinweis | ca. € | Link |
 |---|---|---|---|
 | PETG-Filament schwarz, matt, 1,75 mm | wärmefest (Glühlampe!) und streulichtarm; PLA wird ab ≈ 55 °C weich | 20 | [Amazon\*](https://www.amazon.de/s?k=PETG+Filament+schwarz+matt+1%2C75&tag=johannesroe08-21) |
-| Gewindeeinsätze M3 zum Einschmelzen | für die Halter; Bohrung laut Hersteller (typ. Ø 4,0–4,2, Tiefe ≥ 7) | 8 | [Amazon\*](https://www.amazon.de/s?k=Gewindeeins%C3%A4tze+M3+Einschmelzmuttern&tag=johannesroe08-21) |
-| Senkkopfschrauben M3 × 10, ISO 10642 (Innensechskant) | von unten durch die Grundplatte | 6 | [Amazon\*](https://www.amazon.de/s?k=Senkkopfschrauben+M3x10+ISO+10642&tag=johannesroe08-21) |
+| Schrauben, Gewindeeinsätze | Stückliste folgt mit den Druckdateien | – | – |
 | Schrauben/Abstandshalter M2,5 | Raspberry Pi auf der Adapterplatte | 6 | [Amazon\*](https://www.amazon.de/s?k=M2.5+Abstandshalter+Set+Raspberry+Pi&tag=johannesroe08-21) |
 | Weißes PETG oder Opalfolie | Streuscheibe in der Spaltkappe | – | Rest aus dem Bestand |
 
