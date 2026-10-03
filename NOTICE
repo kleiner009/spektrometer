@@ -1,0 +1,21 @@
+Spektrometer für Leuchtmittel
+Copyright 2026 Johannes Röding
+
+Dieses Projekt steht unter der Apache License 2.0 (siehe LICENSE).
+
+Es enthält und verändert Teile von PySpectrometer2:
+  PySpectrometer2, Copyright Les Wright
+  https://github.com/leswright1977/PySpectrometer2
+  Lizenz: Apache License 2.0
+
+Geänderte Dateien aus PySpectrometer2 (mit Änderungshinweis im Dateikopf):
+  software/spektrometer.py
+  software/specFunctions.py
+
+Alle übrigen Dateien (kamera.py, kalibrierung.py, beamer.py, zuschnitt.py,
+touch_kalibrierung.py, install.sh, Systemdateien, Druckdateien und Zeichnungen
+des Raster-Grundplatten-Systems RGS) sind eigene Arbeiten.
+
+Verwendete Bibliotheken (eigene Lizenzen): Picamera2 (BSD-2-Clause),
+OpenCV (Apache-2.0), NumPy (BSD-3-Clause), Pillow (MIT-CMU),
+colour-science (BSD-3-Clause).

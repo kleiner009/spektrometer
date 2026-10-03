@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+*.log
+alt/
+caldata.txt
+empfindlichkeit.csv*
+kamera_einstellungen.json
+kalibrierung_protokoll.json

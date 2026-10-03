@@ -1,0 +1,22 @@
+# Ausgaenge fuer das Spektrometer. Die Beamer-Ansicht zeichnet spektrometer.py
+# selbst in voller Aufloesung (keine Spiegelung mehr); pkill beendet evtl. alte wl-mirror.
+profile nur_display {
+	output SPI-1 enable transform normal position 0,0
+	exec pkill -x wl-mirror
+}
+profile hdmi0 {
+	output SPI-1 enable transform normal position 0,0
+	output HDMI-A-1 enable mode 1920x1080 position 480,0
+	exec pkill -x wl-mirror
+}
+profile hdmi1 {
+	output SPI-1 enable transform normal position 0,0
+	output HDMI-A-2 enable mode 1920x1080 position 480,0
+	exec pkill -x wl-mirror
+}
+profile hdmi_beide {
+	output SPI-1 enable transform normal position 0,0
+	output HDMI-A-1 enable mode 1920x1080 position 480,0
+	output HDMI-A-2 enable mode 1920x1080 position 2400,0
+	exec pkill -x wl-mirror
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<openbox_config xmlns="http://openbox.org/3.4/rc">
+	<touch deviceName="ADS7846 Touchscreen" mapToOutput="SPI-1" mouseEmulation="yes"/>
+	<libinput>
+		<device category="touch">
+			<calibrationMatrix>-1.10880 0.00342 1.04373 -0.00388 -1.12963 1.04978</calibrationMatrix>
+		</device>
+	</libinput>
+	<windowRules>
+		<windowRule title="PySpectrometer*">
+			<action name="MoveToOutput" output="SPI-1"/>
+		</windowRule>
+		<windowRule title="Spektrometer Beamer HDMI-A-1">
+			<action name="MoveToOutput" output="HDMI-A-1"/>
+		</windowRule>
+		<windowRule title="Spektrometer Beamer HDMI-A-2">
+			<action name="MoveToOutput" output="HDMI-A-2"/>
+		</windowRule>
+	</windowRules>
+</openbox_config>
