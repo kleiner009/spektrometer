@@ -27,6 +27,7 @@ Genau diese Teile stecken im Original-Aufbau. Preise schwanken (Stand: 04.10.202
 
 | Teil | Bedarf | Packung | ca. € | Link |
 |---|---|---|---|---|
+| PLA-Filament weiß, 1,75 mm | nur für die Spaltkappe (Streuscheibe) | 1 kg | 20 | [Amazon\*](https://www.amazon.de/s?k=PLA+Filament+wei%C3%9F+1%2C75&tag=johannesroe08-21) |
 | PETG-Filament schwarz, matt, 1,75 mm | laut Slicer | 1 kg | 20 | [Amazon\*](https://www.amazon.de/s?k=PETG+Filament+schwarz+matt+1%2C75&tag=johannesroe08-21) |
 | Gewindeeinsatz M3 (ruthex RX-M3x5.7) | **9 Stück** | 100 | 9 | [Amazon\*](https://www.amazon.de/dp/B08BCRZZS3?tag=johannesroe08-21) |
 | Gewindeeinsatz M2 (ruthex RX-M2x4) | **8 Stück** | 70 | 9 | [Amazon\*](https://www.amazon.de/dp/B088QJG676?tag=johannesroe08-21) |

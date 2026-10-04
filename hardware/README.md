@@ -27,6 +27,8 @@ Die Gewindeeinsätze werden mit dem Lötkolben eingeschmolzen. Bezugsquellen sie
 
 **Druckeinstellungen:** PETG schwarz matt (wärmefest wegen der Glühlampe, streulichtarm), Schichthöhe 0,2 mm, mindestens 3 Wände, Füllung ≥ 30 %.
 
+**Ausnahme Spaltkappe:** aus **weißem PLA** auf einer **glatten, unstrukturierten Druckplatte** drucken, **erste Schicht 0,1 mm**. Die Kappe wirkt als Streuscheibe vor dem Spalt und muss das Licht gleichmäßig durchlassen. Eine strukturierte Platte oder eine dickere erste Schicht verschlechtern das. PLA wird ab etwa 55 °C weich, deshalb die Glühlampe beim Kalibrieren nicht direkt an die Kappe halten.
+
 ## Hinweise zum Aufbau
 
 - **Streuscheibe vor dem Spalt ist Pflicht.** Ohne sie hängen Helligkeit und Lage des Spektrums stark von der Lampenposition ab.
