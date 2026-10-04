@@ -4,7 +4,11 @@ Ein Demo-Spektrometer für den Unterricht, gebaut aus einem Raspberry Pi 5, eine
 
 Entstanden für den Lernfeld-Unterricht „Beleuchtungstechnik“ (Elektroniker/-in für Betriebstechnik): Lichtfarbe, Farbwiedergabe, Unterschied zwischen Kolorimeter und Spektralphotometer.
 
-![Spektrometer](docs/fotos/geraet.jpg)
+![Spektrometer mit Raspberry Pi 5, Touchdisplay und Taschenspektroskop zeigt das Spektrum einer LED](docs/fotos/geraet.jpg)
+
+| Draufsicht | Spaltkappe (Streuscheibe) |
+|---|---|
+| ![Draufsicht: Spektroskop, Kamera und Raspberry Pi auf der Grundplatte](docs/fotos/draufsicht.jpg) | ![Weiße Spaltkappe vor dem Taschenspektroskop](docs/fotos/spaltkappe.jpg) |
 
 ## Funktionen
 
@@ -34,15 +38,24 @@ Die Streuscheibe vor dem Spalt sorgt dafür, dass Helligkeit und Lage des Spektr
 
 Für Vergleiche im Unterricht gut geeignet, **kein Messgerät** im Sinne einer Prüfung.
 
-| Lichtquelle | angezeigt |
-|---|---|
-| Glühlampe (Referenz) | Ra 97–99, R9 ≈ 94 |
-| LED 5000 K | 4990 K, Ra 92, R9 62 (Abgleich auf diese Lampe) |
-| LED 8500 K | ≈ 9700 K, Ra 97, R9 95 |
+| Lichtquelle | Nennwert | gemessen | Ra | R9 |
+|---|---|---|---|---|
+| Glühlampe 100 W (Referenz) | – | 2860 K | 99 | 100 |
+| LED-Leuchte | 5000 K | 4990 K | 90 | 56 |
+| LED-Leuchte | 8500 K | 8440 K | 95 | 80 |
+
+| Glühlampe | LED 5000 K | LED 8500 K |
+|---|---|---|
+| ![Spektrum Glühlampe](docs/fotos/display-gluehlampe.png) | ![Spektrum LED 5000 K](docs/fotos/display-led-5000k.png) | ![Spektrum LED 8500 K](docs/fotos/display-led-8500k.png) |
+
+**Beamer-Ansicht (Full HD):**
+
+![Beamer-Ansicht mit dem Spektrum einer 5000-K-LED](docs/fotos/beamer-led-5000k.png)
 
 - Wellenlängenauflösung: einige Nanometer (Taschenspektroskop + Kamera)
 - Die Wellenlängenachse stützt sich auf drei Punkte (532 nm, 650 nm, LED-Blauspitze ≈ 450 nm). Mit einer Linienquelle (Leuchtstoffröhre/Energiesparlampe: 436/546/611 nm) wäre sie genauer.
-- Die Temperatur der Referenz-Glühlampe ist meist unbekannt. Sie wird im Assistenten eingestellt (Voreinstellung 2850 K; Abgleich auf eine 5000-K-LED ergab 2871 K).
+- Die Temperatur der Referenz-Glühlampe ist meist unbekannt. Sie wird im Assistenten eingestellt (Voreinstellung 2850 K; Abgleich auf eine 5000-K-LED ergab 2871 K). Danach traf das Gerät die 8500-K-LED auf unter 1 %.
+- **Winkel beachten:** Viele LED-Leuchten strahlen je nach Richtung unterschiedliches Licht ab (bei der 8500-K-Leuchte schwankte die Anzeige zwischen ≈ 8500 und über 13 000 K). Lampen für Vergleiche immer gleich ausrichten.
 
 ## Nachbauen
 
