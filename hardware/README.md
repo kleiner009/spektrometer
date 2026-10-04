@@ -10,7 +10,7 @@
 | `Spektrometer_01-RasPi-Halter.3mf` | Halter für den Raspberry Pi 5 mit Display |
 | `Spektrometer_01-Spaltkappe.3mf` | Spaltkappe mit Aufnahme für die Streuscheibe |
 | `Spektrometer_01-Tunnel.3mf` | Lichttunnel zwischen Lampe und Spaltkappe |
-| `Spektrometer_01_All.3mf` | alle Teile zusammen auf einer Druckplatte |
+| `Spektrometer_01-All.3mf` | alle Teile zusammen auf einer Druckplatte |
 | `Spektrometer_01-All.f3d` | Fusion-360-Konstruktion aller Teile (zum Anpassen, z. B. für eine andere Kamera) |
 
 ## Stückliste Kleinteile
