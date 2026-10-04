@@ -70,11 +70,7 @@ Taste **„Kalibrieren“** am Display. Der Assistent führt durch sechs Schritt
 5. **Glühlampe:** 60–100 W ohne Dimmer, 15–20 cm Abstand. Die Belichtung wird für zwei Messungen automatisch gewählt. „Übereinstimmung lang/kurz“ sollte zwischen 0,8 und 1,25 liegen.
 6. **Speichern:** Die alten Werte werden in `alt/` gesichert.
 
-Danach die Achse auf den sinnvollen Bereich zuschneiden (die Glühlampe strahlt Infrarot bis über 850 nm, das sonst mit in den Ausschnitt fällt):
-
-```bash
-cd ~/Spektrometer && ./stop.sh && venv/bin/python3 zuschnitt.py && ./start.sh
-```
+Nach den Wellenlängen-Schritten (Laser, LED) **schneidet der Assistent den Bildausschnitt automatisch zu**: Schritt 1 wählt den Rahmen bewusst großzügig, danach wird der Ausschnitt so angepasst, dass 360–800 nm die volle Displaybreite füllen. Die Glühlampe wird bereits im endgültigen Ausschnitt gemessen. (`software/zuschnitt.py` bleibt als Werkzeug für ältere Kalibrierungen.)
 
 ## Bedienung
 

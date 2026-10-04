@@ -682,10 +682,50 @@ def speichern(crop, spiegeln, punkte, gluehlampe, wl):
 	return sicherung
 
 
+ACHSE_VON, ACHSE_BIS = 360.0, 800.0   # nach der Wellenlaengen-Kalibrierung auf diesen Bereich zuschneiden
+
+
+def zuschnitt_berechnen(crop, spiegeln, punkte):
+	"""Ausschnitt so verkleinern, dass ACHSE_VON..ACHSE_BIS die volle Bildbreite fuellt.
+	Schritt 1 waehlt den Rahmen bewusst grosszuegig (u. a. Gluehlampen-IR bis ueber 850 nm);
+	nach den Lasern/der LED ist die Zuordnung bekannt und der sinnvolle Bereich berechenbar.
+	Rueckgabe: (neuer Ausschnitt, Funktion alte Bildspalte -> neue Bildspalte) oder (None, None).
+	Abbildung wie in kamera._roh_auswerten: Bildspalte x <-> Sensorspalte cx + (x + 0,5) * cw / 800
+	(gespiegelt von rechts gezaehlt)."""
+	breite = kamera.FRAME_W
+	cx, cy, cw, ch = crop
+	s_alt = cw / breite
+	wl = zuordnung(punkte)
+	x = np.arange(breite, dtype=float)
+	pa, pb = float(np.interp(ACHSE_VON, wl, x)), float(np.interp(ACHSE_BIS, wl, x))
+
+	def sensor(xm, cx_, s_):
+		return cx_ + ((breite - xm - 0.5) if spiegeln else (xm + 0.5)) * s_
+
+	sa, sb = sensor(pa, cx, s_alt), sensor(pb, cx, s_alt)
+	lo, hi = min(sa, sb), max(sa, sb)
+	nw = int(round((hi - lo) / 4)) * 4
+	if nw >= cw or nw < 64:
+		return None, None   # nichts zu verkleinern (oder unplausibel)
+	nh = nw * 3 // 4
+	if nh > SENSOR_H:
+		nh = SENSOR_H // 4 * 4
+		nw = nh * 4 // 3
+	nx = int(np.clip(round(lo), 0, SENSOR_W - nw)) & ~1
+	ny = int(np.clip(round(cy + ch / 2 - nh / 2), 0, SENSOR_H - nh)) & ~1
+	s_neu = nw / breite
+
+	def umrechnen(xm):
+		rel = (sensor(xm, cx, s_alt) - nx) / s_neu
+		return (breite - 0.5 - rel) if spiegeln else (rel - 0.5)
+
+	return (nx, ny, nw, nh), umrechnen
+
+
 def main():
 	ui = Oberflaeche()
 	ui.zeigen("Kalibrierung des Spektrometers",
-	          ["Ablauf: 1 Ausschnitt · 2 grüner Laser · 3 roter Laser · 4 blauer Punkt · 5 Glühlampe · 6 Speichern",
+	          ["Ablauf: 1 Ausschnitt · 2/3 Laser · 4 blauer Punkt · Zuschnitt (automatisch) · 5 Glühlampe · 6 Speichern",
 	           "Bereitlegen: weiße LED (Handylicht), beide Laser, Glühlampe ohne Dimmer.",
 	           "Erst im letzten Schritt wird gespeichert, Abbrechen ist jederzeit möglich."],
 	          None, [("abbruch", "Abbrechen", "rot"), ("start", "Start", "gruen")])
@@ -738,6 +778,27 @@ def main():
 				blau_hinweis = "Blau %.1f px = %d nm (%s)" % (blau[0], blau[1], "gekrümmt" if art == "parabel" else "abschnittsweise linear")
 			else:
 				blau_hinweis = "blauer Punkt verworfen (%.1f px liegt nicht links von Grün %.1f px)" % (blau[0], gruen[0])
+		# Bildausschnitt auf den sinnvollen Bereich zuschneiden (ersetzt zuschnitt.py)
+		crop_neu, umrechnen = zuschnitt_berechnen(crop, spiegeln, punkte)
+		zuschnitt_hinweis = "Ausschnitt unverändert"
+		if crop_neu is not None:
+			ui.zeigen("Bildausschnitt anpassen",
+			          ["Wellenlängen sind bekannt: Der Ausschnitt wird auf %d–%d nm zugeschnitten," % (ACHSE_VON, ACHSE_BIS),
+			           "damit dieser Bereich die volle Displaybreite nutzt.",
+			           "Alt %d,%d %dx%d  →  neu %d,%d %dx%d" % (tuple(crop) + tuple(crop_neu)),
+			           "Kamera startet neu …"], None, [])
+			punkte = sorted((umrechnen(q[0]),) + tuple(q[1:]) for q in punkte)
+			gruen = (umrechnen(gruen[0]),) + tuple(gruen[1:])
+			rot = (umrechnen(rot[0]),) + tuple(rot[1:])
+			if blau not in (None, "auslassen"):
+				blau_hinweis = blau_hinweis.replace("%.1f px" % blau[0], "%.1f px" % umrechnen(blau[0]))
+			stufe = bel.stufe
+			cam.stop()
+			cam.close()
+			crop = crop_neu
+			cam = kamera.kamera_starten(10000, 4.0, 1050000, crop=crop)
+			bel = Belichtung(cam, stufe=stufe)
+			zuschnitt_hinweis = "zugeschnitten auf %d–%d nm" % (ACHSE_VON, ACHSE_BIS)
 		wl = zuordnung(punkte)
 		steigung = (wl[-1] - wl[0]) / (kamera.FRAME_W - 1)
 
@@ -749,7 +810,7 @@ def main():
 		cam.close()
 
 	ui.zeigen("Schritt 6 von 6: Zusammenfassung",
-	          ["Ausschnitt %d,%d  %dx%d   Spiegeln: %s" % (crop + ("ja" if spiegeln else "nein",)),
+	          ["Ausschnitt %d,%d  %dx%d   Spiegeln: %s · %s" % (tuple(crop) + ("ja" if spiegeln else "nein", zuschnitt_hinweis)),
 	           "Grün %.1f px = %d nm · Rot %.1f px = %d nm · %s" % (gruen[0], gruen[1], rot[0], rot[1], blau_hinweis),
 	           "Achse %.0f–%.0f nm (Ø %.3f nm/px) · Glühlampe %d K, gültig %.0f–%.0f nm" % (wl[0], wl[-1], steigung, gluehlampe["temperatur"], *gluehlampe["bereich"]),
 	           "Speichern ersetzt die bisherige Kalibrierung (Sicherung in alt/)."],
