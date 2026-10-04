@@ -42,7 +42,7 @@ Für Vergleiche im Unterricht gut geeignet, **kein Messgerät** im Sinne einer P
 
 - Wellenlängenauflösung: einige Nanometer (Taschenspektroskop + Kamera)
 - Die Wellenlängenachse stützt sich auf drei Punkte (532 nm, 650 nm, LED-Blauspitze ≈ 450 nm). Mit einer Linienquelle (Leuchtstoffröhre/Energiesparlampe: 436/546/611 nm) wäre sie genauer.
-- Die Temperatur der Referenz-Glühlampe ist meist unbekannt. Sie wird im Assistenten eingestellt (Voreinstellung 2500 K, bestimmt durch Abgleich auf eine 5000-K-LED).
+- Die Temperatur der Referenz-Glühlampe ist meist unbekannt. Sie wird im Assistenten eingestellt (Voreinstellung 2850 K; Abgleich auf eine 5000-K-LED ergab 2871 K).
 
 ## Nachbauen
 

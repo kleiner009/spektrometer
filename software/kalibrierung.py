@@ -475,7 +475,7 @@ def schritt_gluehlampe(ui, cam, bel, spiegeln, wl):
 	liefert Rot) und lang (Blau gut ausgesteuert). Eine Gluehlampe hat bei 420 nm nur
 	wenige Prozent ihrer Rot-Intensitaet; mit einer einzigen Belichtung lag Blau nur
 	2-3 Zaehlwerte ueber dem Sockel (27.09.)."""
-	temperatur = 2500  # 100-W-Gluehlampe: per Abgleich auf LED 5000 K bestimmt (02.10.: 2506 K, vorher 2850 angenommen)
+	temperatur = 2850  # 100-W-Gluehlampe: Abgleich auf LED 5000 K ergab 2871 K (Aufbau 04.10.; 02.10. noch 2506 K mit altem Aufbau)
 	blau = np.where(wl <= 480)[0]
 	if len(blau) < 10:
 		blau = np.arange(kamera.FRAME_W // 4)
