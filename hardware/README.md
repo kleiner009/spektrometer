@@ -13,7 +13,17 @@
 | `Spektrometer_01_All.3mf` | alle Teile zusammen auf einer Druckplatte |
 | `Spektrometer_01-All.f3d` | Fusion-360-Konstruktion aller Teile (zum Anpassen, z. B. für eine andere Kamera) |
 
-Eine Stückliste der Kleinteile (Schrauben, Gewindeeinsätze) folgt.
+## Stückliste Kleinteile
+
+| Teil | Anzahl |
+|---|---|
+| Gewindeeinsatz M3 (z. B. ruthex RX-M3x5.7) | 9 |
+| Gewindeeinsatz M2 (z. B. ruthex RX-M2x4) | 8 |
+| Senkkopfschraube M3 × 10, Innensechskant | 8 |
+| Linsen-/Pilzkopfschraube M3 × 12, Innensechskant | 1 |
+| Linsenkopfschraube M2 × 10, Innensechskant | 8 |
+
+Die Gewindeeinsätze werden mit dem Lötkolben eingeschmolzen. Bezugsquellen siehe [KAUFLISTE.md](../KAUFLISTE.md).
 
 **Druckeinstellungen:** PETG schwarz matt (wärmefest wegen der Glühlampe, streulichtarm), Schichthöhe 0,2 mm, mindestens 3 Wände, Füllung ≥ 30 %.
 
