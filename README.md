@@ -15,7 +15,7 @@ Entstanden für den Lernfeld-Unterricht „Beleuchtungstechnik“ (Elektroniker/
 - **Live-Spektrum 360–800 nm**, farbig dargestellt, mit den drei stärksten Maxima
 - **Ra, R9 und Farbtemperatur** nach CIE 13.3 (über [colour-science](https://www.colour-science.org/)), als Schätzwert gekennzeichnet
 - **Empfindlichkeitskorrektur** mit einer Glühlampe als Referenz (Planck-Strahler)
-- **Kalibrier-Assistent** am Touchdisplay: Bildausschnitt, grüner Laser, roter Laser, blaue LED-Spitze, Glühlampe
+- **Kalibrier-Assistent** am Touchdisplay mit zwei Methoden für die Wellenlängen: **Leuchtstofflampe** (6 Linien automatisch erkannt, ± 1 nm) oder **Laser + LED**; danach Glühlampe für die Empfindlichkeit
 - **Beamer-Ansicht** in Full HD: öffnet sich automatisch, sobald HDMI angesteckt wird
 - Belichtung automatisch oder von Hand (0,1 ms bis 1 s), Speichern auf USB-Stick (PNG mit Datum und Maxima)
 - Autostart, Bedienung komplett per Touch
@@ -38,11 +38,12 @@ Die Streuscheibe vor dem Spalt sorgt dafür, dass Helligkeit und Lage des Spektr
 
 Für Vergleiche im Unterricht gut geeignet, **kein Messgerät** im Sinne einer Prüfung.
 
-| Lichtquelle | Nennwert | gemessen | Ra | R9 |
-|---|---|---|---|---|
-| Glühlampe 100 W (Referenz) | – | 2860 K | 99 | 100 |
-| LED-Leuchte | 5000 K | 4990 K | 90 | 56 |
-| LED-Leuchte | 8500 K | 8440 K | 95 | 80 |
+| Lichtquelle | Nennwert | gemessen | Ra |
+|---|---|---|---|
+| Energiesparlampe Philips Genie 18 W warmweiß | 2700 K | 2659 K | 84 |
+| LED-Lampe | 5500 K | 5509 K | 79 |
+
+Stand 06.10.2026, Kalibrierung mit Leuchtstofflampe. Die Bilder unten stammen noch von der Laser-Kalibrierung (04.10.).
 
 | Glühlampe | LED 5000 K | LED 8500 K |
 |---|---|---|
@@ -53,8 +54,10 @@ Für Vergleiche im Unterricht gut geeignet, **kein Messgerät** im Sinne einer P
 ![Beamer-Ansicht mit dem Spektrum einer 5000-K-LED](docs/fotos/beamer-led-5000k.png)
 
 - Wellenlängenauflösung: einige Nanometer (Taschenspektroskop + Kamera)
-- Die Wellenlängenachse stützt sich auf drei Punkte (532 nm, 650 nm, LED-Blauspitze ≈ 450 nm). Mit einer Linienquelle (Leuchtstoffröhre/Energiesparlampe: 436/546/611 nm) wäre sie genauer.
-- Die Temperatur der Referenz-Glühlampe ist meist unbekannt. Sie wird im Assistenten eingestellt (Voreinstellung 2850 K; Abgleich auf eine 5000-K-LED ergab 2871 K). Danach traf das Gerät die 8500-K-LED auf unter 1 %.
+- **Wellenlängen:** Mit der Leuchtstofflampe liegen alle 6 Linien (405–709 nm) auf ± 1,1 nm. Unterhalb 405 nm und oberhalb 710 nm wird extrapoliert.
+- **Laser-Wellenlängen nie ungeprüft annehmen:** Unser „532-nm“-Laser lag laut Leuchtstofflampe bei ≈ 513 nm (Diodenlaser). Mit der falschen Annahme zeigte das Gerät im Grün/Gelb bis zu 20 nm daneben.
+- **Temperatur der Referenz-Glühlampe:** Sie ist meist unbekannt und bestimmt die ganze Empfindlichkeitskorrektur. Unsere 200-W-Lampe strahlt wie ≈ 2060 K (Abgleich: Energiesparlampe 2700 K und LED 5500 K stimmen damit beide auf ≈ 2 %). Mit den üblichen 2850 K zeigte das Gerät die LED bei fast 30 000 K. Voreinstellung: `GLUEHLAMPE_K` in `software/kalibrierung.py`; bei einer anderen Lampe mit einer Lampe bekannter Farbtemperatur prüfen.
+- **Kein Tageslicht** bei der Glühlampen-Messung: Fremdlicht vom Fenster verfälscht die Korrektur stark.
 - **Winkel beachten:** Viele LED-Leuchten strahlen je nach Richtung unterschiedliches Licht ab (bei der 8500-K-Leuchte schwankte die Anzeige zwischen ≈ 8500 und über 13 000 K). Lampen für Vergleiche immer gleich ausrichten.
 
 ## Nachbauen
@@ -75,15 +78,22 @@ Für Vergleiche im Unterricht gut geeignet, **kein Messgerät** im Sinne einer P
 
 ## Kalibrieren
 
-Taste **„Kalibrieren“** am Display. Der Assistent führt durch sechs Schritte:
+Taste **„Kalibrieren“** am Display. Zuerst wird die Methode für die Wellenlängen gewählt.
+
+**Leuchtstofflampe (empfohlen, 5 Schritte):**
 
 1. **Bildausschnitt:** Weißes Licht vor den Spalt, der grüne Rahmen markiert das Spektrum, dann „Übernehmen“.
-2. **Grüner Laser** (532 nm) und 3. **roter Laser** (650 nm): Laser auf die Streuscheibe richten, Belichtung anpassen, „Messen“.
-4. **Blauer Punkt:** weiße LED, die Blauspitze wird gesucht (≈ 450 nm, einstellbar).
-5. **Glühlampe:** 60–100 W ohne Dimmer, 15–20 cm Abstand. Die Belichtung wird für zwei Messungen automatisch gewählt. „Übereinstimmung lang/kurz“ sollte zwischen 0,8 und 1,25 liegen.
-6. **Speichern:** Die alten Werte werden in `alt/` gesichert.
+2. **Leuchtstofflampe:** Energiesparlampe (Dreibanden-Leuchtstoff) ≥ 3 min vorher einschalten und vor den Spalt stellen, „Messen“. Der Assistent belichtet kurz und lang, erkennt die Linien Hg 405/436, Tb 488, Hg 546, Eu 611/709 nm selbst, prüft die Spiegelung und zeigt den Restfehler je Linie (gut: ≤ 1,5 nm).
+3. **Kontrolle (optional):** Laser vor den Spalt; angezeigt wird nur, welche Wellenlänge die neue Achse ihm gibt.
+4. **Glühlampe** (siehe unten), 5. **Speichern.**
 
-Nach den Wellenlängen-Schritten (Laser, LED) **schneidet der Assistent den Bildausschnitt automatisch zu**: Schritt 1 wählt den Rahmen bewusst großzügig, danach wird der Ausschnitt so angepasst, dass 360–800 nm die volle Displaybreite füllen. Die Glühlampe wird bereits im endgültigen Ausschnitt gemessen. (`software/zuschnitt.py` bleibt als Werkzeug für ältere Kalibrierungen.)
+**Laser + LED (6 Schritte):** 1 Bildausschnitt · 2 grüner Laser · 3 roter Laser · 4 Blauspitze einer weißen LED (optional) · 5 Glühlampe · 6 Speichern. Die Laser-Wellenlängen sind am Gerät einstellbar; Voreinstellung `LASER_GRUEN_NM`/`LASER_ROT_NM` in `software/kalibrierung.py`.
+
+**Glühlampe:** klare Glühlampe ohne Dimmer, 15–20 cm Abstand, **Rollo zu**. Die Belichtung wird für zwei Messungen automatisch gewählt. „Übereinstimmung lang/kurz“ sollte zwischen 0,8 und 1,25 liegen. Die Farbtemperatur der Lampe ist mit − / + einstellbar (siehe „Wie genau ist das?“).
+
+Gespeichert wird erst im letzten Schritt, die alten Werte werden in `alt/` gesichert.
+
+Nach den Wellenlängen-Schritten **schneidet der Assistent den Bildausschnitt automatisch zu**: Schritt 1 wählt den Rahmen bewusst großzügig, danach wird der Ausschnitt so angepasst, dass 360–800 nm die volle Displaybreite füllen. Die Glühlampe wird bereits im endgültigen Ausschnitt gemessen. (`software/zuschnitt.py` bleibt als Werkzeug für ältere Kalibrierungen.)
 
 ## Bedienung
 
@@ -110,6 +120,7 @@ install.sh  Installation auf dem Raspberry Pi
 
 ## Sicherheit im Unterricht
 
+- **Leuchtstofflampe:** enthält Quecksilber; bei Bruch lüften und Scherben nicht mit dem Staubsauger aufnehmen.
 - **Laser:** nur Laserklasse 1 oder 2 (< 1 mW), nie in Augen oder auf spiegelnde Flächen richten.
 - **Glühlampe:** wird heiß; Abstand halten, Halter aus PETG (nicht PLA) drucken.
 

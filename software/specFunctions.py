@@ -247,10 +247,12 @@ def peakIndexes(y, thres=0.3, min_dist=1, thres_abs=False):
 
 
 def zuordnung_berechnen(pixels, wavelengths, width):
-	"""Wellenlaenge je Pixel. 2 Punkte: linear. 3 Punkte: Parabel, solange sie ueber das
-	ganze Bild eindeutig (monoton) bleibt; sonst abschnittsweise linear durch die Punkte,
-	an den Enden geradlinig verlaengert (02.10.: mit der OV9281 liegt Rot bei Pixel 545
-	von 800 -> die Parabel kehrte innerhalb des Bildes um, der blaue Punkt wurde verworfen).
+	"""Wellenlaenge je Pixel. 2 Punkte: linear. Ab 3 Punkten: Parabel (bei mehr Punkten
+	Ausgleichsparabel - ein Polynom 3. Grades extrapoliert zu den Raendern hin schlechter,
+	06.10.: Leuchtstofflampe mit 6 Linien), solange sie ueber das ganze Bild eindeutig
+	(monoton) bleibt; sonst abschnittsweise linear durch die Punkte, an den Enden geradlinig
+	verlaengert (02.10.: mit der OV9281 liegt Rot bei Pixel 545 von 800 -> die Parabel kehrte
+	innerhalb des Bildes um, der blaue Punkt wurde verworfen).
 	Rueckgabe: (Wellenlaengen-Array, Art) mit Art "linear" / "parabel" / "abschnittsweise"."""
 	px = np.asarray(pixels, dtype=float)
 	nm = np.asarray(wavelengths, dtype=float)
@@ -259,7 +261,7 @@ def zuordnung_berechnen(pixels, wavelengths, width):
 	x = np.arange(width, dtype=float)
 	if len(px) == 2:
 		return np.polyval(np.polyfit(px, nm, 1), x), "linear"
-	wl = np.polyval(np.polyfit(px, nm, min(len(px) - 1, 3)), x)
+	wl = np.polyval(np.polyfit(px, nm, 2), x)
 	d = np.diff(wl)
 	if np.all(d > 0) or np.all(d < 0):
 		return wl, "parabel"
@@ -337,48 +339,13 @@ def readcal(width):
 			message = 1 #return message only 3 wavelength cal secodn order poly (Inaccurate)
 
 	if (len(pixels) > 3):
-		print("Calculating third order polynomial...")
-		coefficients = np.poly1d(np.polyfit(pixels, wavelengths, 3))
-		print(coefficients)
-		#note this pulls out extremely precise numbers.
-		#this causes slight differences in vals then when we compute manual, but hey ho, more precision
-		#that said, we waste that precision later, but tbh, we wouldn't get that kind of precision in
-		#the real world anyway! 1/10 of a nm is more than adequate!
-		C1 = coefficients[3]
-		C2 = coefficients[2]
-		C3 = coefficients[1]
-		C4 = coefficients[0]
-		'''
-		print(C1)
-		print(C2)
-		print(C3)
-		print(C4)
-		'''
-		print("Generating Wavelength Data!\n\n")
-		for pixel in range(width):		
-			wavelength=((C1*pixel**3)+(C2*pixel**2)+(C3*pixel)+C4)
-			wavelength = round(wavelength,6)
-			wavelengthData.append(wavelength)
-
-		#final job, we need to compare all the recorded wavelenths with predicted wavelengths
-		#and note the deviation!
-		#do something if it is too big!
-		predicted = []
-		#iterate over the original pixelnumber array and predict results
-		for i in pixels:
-			px = i
-			y=((C1*px**3)+(C2*px**2)+(C3*px)+C4)
-			predicted.append(y)
-
-		#calculate 2 squared of the result
-		#if this is close to 1 we are all good!
-		corr_matrix = np.corrcoef(wavelengths, predicted)
-		corr = corr_matrix[0,1]
-		R_sq = corr**2
-		 
-		print("R-Squared="+str(R_sq))
-
-		message = 2 #Multiwavelength cal, 3rd order poly
+		# Leuchtstofflampe (06.10.): Ausgleichsparabel wie im Kalibrier-Assistenten
+		wl, art = zuordnung_berechnen(pixels, wavelengths, width)
+		print("Zuordnung aus %d Punkten:" % len(pixels), art)
+		wavelengthData = [round(float(w), 6) for w in wl]
+		rest = np.interp(pixels, np.arange(width), wl) - np.asarray(wavelengths, dtype=float)
+		print("Restfehler je Punkt (nm):", np.round(rest, 2))
+		message = 2
 
 
 	if message == 0:
@@ -391,8 +358,8 @@ def readcal(width):
 		calmsg3 = "Polynom 2. Grades"
 	if message == 2:
 		calmsg1 = "Kalibriert (%d Punkte)" % len(pixels)
-		calmsg2 = "mehr als 3 Kalibrierpunkte"
-		calmsg3 = "Polynom 3. Grades"
+		calmsg2 = "Linienquelle (Leuchtstofflampe)"
+		calmsg3 = "Ausgleichsparabel"
 	if message == 3:
 		calmsg1 = "Kalibriert (2 Laser, linear)"
 		calmsg2 = "2 Kalibrierpunkte"

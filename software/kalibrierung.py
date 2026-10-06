@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 """Gefuehrte Kalibrierung des Spektrometers am Touchdisplay.
 
-Schritte:
-  1. Bildausschnitt  - weisses Licht vor den Spalt, Spektrum wird erkannt
-  2. Gruener Laser   - erster Fixpunkt (Standard 532 nm)
-  3. Roter Laser     - zweiter Fixpunkt (Standard 650 nm), prueft auch die Spiegelung
-  4. Blauer Punkt    - optional: Blauspitze einer weissen LED (Standard 450 nm);
-                       mit 3 Punkten wird die Zuordnung gekruemmt (Polynom 2. Grades)
-  5. Gluehlampe      - Normkurve (Planck) fuer die Empfindlichkeitskorrektur
-  6. Zusammenfassung - Speichern oder Verwerfen
+Beim Start wird die Methode fuer die Wellenlaengen gewaehlt:
+
+Leuchtstofflampe (5 Schritte):
+  1. Bildausschnitt   - weisses Licht vor den Spalt, Spektrum wird erkannt
+  2. Leuchtstofflampe - Linien 405/436/488/546/611/709 nm automatisch erkennen und
+                        zuordnen (Ausgleichsparabel), prueft auch die Spiegelung
+  3. Kontrolle        - optional: Laser messen, die neue Achse wird nur angezeigt
+  4. Gluehlampe       - Normkurve (Planck) fuer die Empfindlichkeitskorrektur
+  5. Zusammenfassung  - Speichern oder Verwerfen
+
+Laser + LED (6 Schritte, bisheriger Weg):
+  1. Bildausschnitt, 2. gruener Laser (LASER_GRUEN_NM), 3. roter Laser (prueft die
+  Spiegelung), 4. LED-Blauspitze (optional), 5. Gluehlampe, 6. Zusammenfassung
+
+Nach den Wellenlaengen wird der Ausschnitt automatisch auf 360-800 nm zugeschnitten.
+06.10.2026: Der eigene "gruene Laser" liegt laut Leuchtstofflampe bei ~513 nm, nicht 532 nm.
 
 Gespeichert wird erst im letzten Schritt: kamera_einstellungen.json, caldata.txt,
 empfindlichkeit.csv, Protokoll in kalibrierung_protokoll.json. Alte Dateien
@@ -93,6 +101,26 @@ class Oberflaeche:
 			d.text(((x0 + x1) / 2 - d.textlength(text, font=f) / 2, 426), text, font=f, fill=(255, 255, 255))
 		cv2.imshow(FENSTER, cv2.cvtColor(np.asarray(pil), cv2.COLOR_RGB2BGR))
 		cv2.waitKey(1)
+
+
+# Zwei Methoden fuer die Wellenlaengen (Auswahl beim Start):
+#   "laser": 1 Ausschnitt, 2/3 Laser, 4 LED-Blauspitze, 5 Gluehlampe, 6 Speichern
+#   "cfl":   1 Ausschnitt, 2 Leuchtstofflampe, 3 Laser-Kontrolle, 4 Gluehlampe, 5 Speichern
+GESAMT = 5            # Anzahl Schritte der gewaehlten Methode (fuer die Titel)
+LASER_GRUEN_NM = 513  # eigener gruener Laser laut Leuchtstofflampe (06.10.); DPSS-Laser: 532
+LASER_ROT_NM = 650
+# Farbtemperatur der Referenz-Gluehlampe (Voreinstellung im Gluehlampen-Schritt, dort mit -/+ aenderbar).
+# Normale Gluehlampen 100-200 W: 2850-2950 K. Unsere 200-W-Lampe strahlt wie ~2060 K: Abgleich am
+# 06.10.2026 mit Leuchtstofflampe (2700 K) und LED (5500 K) gleichzeitig, beide danach auf ~2 % genau.
+# Bei einer anderen Lampe: mit einer Lampe bekannter Farbtemperatur pruefen und hier anpassen.
+GLUEHLAMPE_K = 2060
+
+
+def titel_setzen(methode):
+	global GESAMT, TITEL_GL, TITEL_CFL
+	GESAMT = 6 if methode == "laser" else 5
+	TITEL_GL = "Schritt %d von %d: Glühlampe (Normkurve)" % (GESAMT - 1, GESAMT)
+	TITEL_CFL = "Schritt 2 von %d: Leuchtstofflampe" % GESAMT
 
 
 # --------------------------------------------------------------------------- Messhilfen
@@ -258,7 +286,7 @@ def schritt_ausschnitt(ui):
 				info = "Erkannt: x %d, y %d, %d x %d Pixel" % vorschlag
 			else:
 				info = "Kein Spektrum erkannt"
-			ui.zeigen("Schritt 1 von 6: Bildausschnitt",
+			ui.zeigen("Schritt 1 von %d: Bildausschnitt" % GESAMT,
 			          ["Weißes Licht (LED-Lampe oder Handylicht) vor den Spalt halten.",
 			           "Der grüne Rahmen zeigt den erkannten Spektrumbereich.",
 			           bel.text(spitze), info],
@@ -275,6 +303,7 @@ def schritt_ausschnitt(ui):
 		cam.close()
 
 
+# --------------------------------------------------------------------------- Laser + LED
 def schritt_laser(ui, cam, bel, nummer, name, wellenlaenge, spiegeln):
 	"""Laserlinie live anzeigen, Wellenlaenge einstellbar, auf 'Messen' 15 Bilder mitteln."""
 	while True:
@@ -282,7 +311,7 @@ def schritt_laser(ui, cam, bel, nummer, name, wellenlaenge, spiegeln):
 		px, hoehe = linie_finden(p)
 		messbar = px is not None and aus < 245
 		text = ("Linie bei %.1f px" % px) if px is not None else "keine Linie erkannt"
-		ui.zeigen("Schritt %d von 6: %s" % (nummer, name),
+		ui.zeigen("Schritt %d von %d: %s" % (nummer, GESAMT, name),
 		          ["%s aufs Butterbrotpapier vor dem Spalt richten. Nicht ins Okular schauen!" % name,
 		           "Belichtung mit Dunkler/Heller so wählen, dass die Spitze \"gut\" ist.",
 		           bel.text(aus),
@@ -311,7 +340,7 @@ def schritt_laser(ui, cam, bel, nummer, name, wellenlaenge, spiegeln):
 			if len(werte) < 5:
 				continue  # zu wenig gueltige Bilder, weiter live
 			mittel, streu = float(np.mean(werte)), float(np.std(werte))
-			ui.zeigen("Schritt %d von 6: %s" % (nummer, name),
+			ui.zeigen("Schritt %d von %d: %s" % (nummer, GESAMT, name),
 			          ["Gemessen: %.1f px (Streuung %.1f px) aus %d Bildern" % (mittel, streu, len(werte)),
 			           "Zugeordnet: %d nm" % wellenlaenge, "Übernehmen oder neu messen?"],
 			          profil_bild(p, mittel, text="%.1f px = %d nm" % (mittel, wellenlaenge)),
@@ -347,7 +376,7 @@ def schritt_blau(ui, cam, bel, spiegeln, gruen_px):
 		px, hoehe = spitze_finden(p, gruen_px)
 		messbar = px is not None and aus < 245
 		text = ("Spitze bei %.1f px" % px) if px is not None else "keine Spitze links vom Grün"
-		ui.zeigen("Schritt 4 von 6: Blauer Punkt (optional)",
+		ui.zeigen("Schritt 4 von %d: Blauer Punkt (optional)" % GESAMT,
 		          ["Weiße LED (Handylicht) vor den Spalt: die Blauspitze liegt bei ca. 450 nm.",
 		           "Ohne 3. Punkt bleibt die Zuordnung linear und ist im Blauen ungenau.",
 		           bel.text(aus),
@@ -379,7 +408,7 @@ def schritt_blau(ui, cam, bel, spiegeln, gruen_px):
 			if len(werte) < 5:
 				continue
 			mittel, streu = float(np.mean(werte)), float(np.std(werte))
-			ui.zeigen("Schritt 4 von 6: Blauer Punkt (optional)",
+			ui.zeigen("Schritt 4 von %d: Blauer Punkt (optional)" % GESAMT,
 			          ["Gemessen: %.1f px (Streuung %.1f px) aus %d Bildern" % (mittel, streu, len(werte)),
 			           "Zugeordnet: %d nm" % wellenlaenge, "Übernehmen oder neu messen?"],
 			          profil_bild(p, mittel, farbe=(200, 60, 0), text="%.1f px = %d nm" % (mittel, wellenlaenge)),
@@ -393,6 +422,297 @@ def schritt_blau(ui, cam, bel, spiegeln, gruen_px):
 				cv2.waitKey(30)
 
 
+def wellenlaengen_laser(ui, cam, bel, spiegeln):
+	"""Bisheriger Weg: gruener + roter Laser, optional LED-Blauspitze.
+	Rueckgabe: (punkte, spiegeln, hinweis) oder None (Abbruch)."""
+	gruen = schritt_laser(ui, cam, bel, 2, "Grüner Laser", LASER_GRUEN_NM, spiegeln)
+	if gruen is None:
+		return None
+	rot = schritt_laser(ui, cam, bel, 3, "Roter Laser", LASER_ROT_NM, spiegeln)
+	if rot is None:
+		return None
+	# Blau muss links liegen: liegt Rot links von Gruen, Spiegelung umkehren
+	if rot[0] < gruen[0]:
+		spiegeln = not spiegeln
+		gruen = (kamera.FRAME_W - 1 - gruen[0],) + gruen[1:]
+		rot = (kamera.FRAME_W - 1 - rot[0],) + rot[1:]
+	if abs(rot[0] - gruen[0]) < 50:
+		ui.zeigen("Fehler", ["Grüne und rote Linie liegen zu dicht beieinander (%.0f / %.0f px)." % (gruen[0], rot[0]),
+		                     "Vermutlich wurde zweimal derselbe Laser gemessen. Bitte neu starten."], None,
+		          [("ende", "Beenden", "rot")])
+		while ui.taste() != "ende":
+			cv2.waitKey(30)
+		return None
+	punkte = [gruen, rot]
+	blau_hinweis = "ohne blauen Punkt (linear)"
+	blau = schritt_blau(ui, cam, bel, spiegeln, gruen[0])
+	if blau is None:
+		return None
+	if blau != "auslassen":
+		versuch = sorted([blau, gruen, rot])
+		wl_test = zuordnung(versuch)
+		if np.all(np.diff(wl_test) > 0) and blau[0] < gruen[0]:
+			punkte = versuch
+			from specFunctions import zuordnung_berechnen
+			art = zuordnung_berechnen([q[0] for q in versuch], [q[1] for q in versuch], kamera.FRAME_W)[1]
+			blau_hinweis = "Blau %.1f px = %d nm (%s)" % (blau[0], blau[1], "gekrümmt" if art == "parabel" else "abschnittsweise linear")
+		else:
+			blau_hinweis = "blauer Punkt verworfen (%.1f px liegt nicht links von Grün %.1f px)" % (blau[0], gruen[0])
+	hinweis = "Grün %.1f px = %d nm · Rot %.1f px = %d nm · %s" % (gruen[0], gruen[1], rot[0], rot[1], blau_hinweis)
+	return punkte, spiegeln, hinweis
+
+
+# --------------------------------------------------------------------------- Leuchtstofflampe
+# Linien einer Dreibanden-Leuchtstofflampe (06.10.: Philips Genie 18 W warmweiss gemessen).
+# (nm, Name, Belichtung, Pflicht, Toleranz_nm). Bei ~8 nm Aufloesung verschmelzen Tb 542,4/543,6
+# mit Hg 546,1 -> effektiv 545,5 nm. Tb 488 und Eu 709 sind Multipletts (Schwerpunkt haengt vom
+# Leuchtstoff ab) -> groessere Toleranz. Hg 577/579 geht im Leuchtstoff-Plateau unter.
+LINIEN_CFL = [
+	(404.66, "Hg 405", "lang", False, 1.5),
+	(435.83, "Hg 436", "kurz", True, 1.5),
+	(487.7, "Tb 488", "kurz", False, 3.0),
+	(545.5, "Hg 546", "kurz", True, 1.5),
+	(611.6, "Eu 611", "kurz", True, 1.5),
+	(709.0, "Eu 709", "lang", False, 3.0),
+]
+TITEL_CFL = "Schritt 2 von 5: Leuchtstofflampe"
+LANG_FAKTOR = 10  # lange Messung fuer die schwachen Linien (405, 709 nm)
+
+
+def untergrund_abziehen(profil, halb=30):
+	"""Profil minus gleitendes 10-%-Perzentil (Leuchtstoff-Kontinuum, Streulicht)."""
+	p = np.asarray(profil, dtype=float)
+	fenster = np.lib.stride_tricks.sliding_window_view(np.pad(p, halb, mode="edge"), 2 * halb + 1)
+	return p - np.percentile(fenster, 10, axis=1)
+
+
+def schwerpunkt(s, i, max_halb=15):
+	"""Schwerpunkt der Linie um Index i, nur Werte ueber halber Hoehe (Subpixel)."""
+	halb = s[i] / 2
+	a, b = i, i
+	while a > max(0, i - max_halb) and s[a - 1] > halb:
+		a -= 1
+	while b < min(len(s) - 1, i + max_halb) and s[b + 1] > halb:
+		b += 1
+	w = s[a:b + 1] - halb
+	return float((np.arange(a, b + 1) * w).sum() / w.sum()) if w.sum() > 0 else float(i)
+
+
+def linien_suchen(profil, kmax=None, relativ=0.03):
+	"""Schmale Linien im Profil: Liste (Position_px, Hoehe ueber Untergrund).
+	kmax: hellster Wert je Spalte; Linien mit Uebersteuerung in der Naehe werden verworfen."""
+	s = untergrund_abziehen(profil)
+	glatt = np.convolve(s, np.ones(3) / 3, mode="same")
+	schwelle = relativ * glatt.max()
+	linien = []
+	for i in range(3, len(s) - 3):
+		if glatt[i] < schwelle or glatt[i] <= glatt[i - 1] or glatt[i] < glatt[i + 1] or glatt[i] < glatt[i - 3:i + 4].max():
+			continue
+		if kmax is not None and kmax[max(0, i - 8):i + 9].max() >= 240:
+			continue
+		linien.append((schwerpunkt(s, i), float(glatt[i])))
+	return linien
+
+
+def linie_bei(linien, ziel, fenster):
+	"""Hoechste Linie im Fenster ziel +- fenster (Pixel) oder None."""
+	kandidaten = [l for l in linien if abs(l[0] - ziel) <= fenster]
+	return max(kandidaten, key=lambda l: l[1]) if kandidaten else None
+
+
+def cfl_zuordnen(kurz, lang, kmax_lang):
+	"""Linien finden und den Wellenlaengen der Leuchtstofflampe zuordnen.
+
+	Die zwei hoechsten Linien der kurzen Messung sind Hg/Tb 545,5 und Eu 611,6 (bei warmweiss
+	ist Eu heller, bei kaltweiss oft Hg - deshalb zaehlt nur die Reihenfolge). Welche links liegt,
+	haengt von der Spiegelung ab: Beide Moeglichkeiten werden mit einer Geraden durch die zwei
+	Linien durchgespielt und die genommen, bei der mehr erwartete Linien gefunden werden.
+	Rueckgabe: (gefunden, umgedreht) mit gefunden = Liste (px, nm, name, toleranz, pflicht)
+	in Bildkoordinaten der Messung, oder (None, Fehlertext)."""
+	lk = linien_suchen(kurz)
+	ll = linien_suchen(lang, kmax_lang, relativ=0.02)
+	if len(lk) < 2:
+		return None, "Zu wenige Linien – Lampe direkt vor den Spalt stellen"
+	a, b = sorted(l[0] for l in sorted(lk, key=lambda l: l[1])[-2:])
+	if b - a < 20:
+		return None, "Die zwei hellsten Linien liegen zu dicht beieinander (%.0f / %.0f px)" % (a, b)
+	beste = None
+	for umgedreht in (False, True):
+		p546, p611 = (b, a) if umgedreht else (a, b)
+		steigung = (611.6 - 545.5) / (p611 - p546)  # nm/px, negativ wenn umgedreht
+		gefunden = []
+		for nm, name, welche, pflicht, tol in LINIEN_CFL:
+			if nm == 545.5:
+				treffer = (p546, 0.0)
+			elif nm == 611.6:
+				treffer = (p611, 0.0)
+			else:
+				# Gerade durch 2 Linien: im Prisma bis ~5 nm daneben, Fenster daher 12 nm
+				treffer = linie_bei(lk if welche == "kurz" else ll, p546 + (nm - 545.5) / steigung, 12.0 / abs(steigung))
+			if treffer is not None:
+				gefunden.append((treffer[0], nm, name, tol, pflicht))
+		if beste is None or len(gefunden) > len(beste[0]):
+			beste = (gefunden, umgedreht)
+	gefunden, umgedreht = beste
+	fehlt = [name for nm, name, _, pflicht, _ in LINIEN_CFL if pflicht and nm not in [g[1] for g in gefunden]]
+	if fehlt:
+		return None, "Nicht gefunden: %s – ist es eine Leuchtstofflampe?" % ", ".join(fehlt)
+	if len(gefunden) < 4:
+		return None, "Nur %d Linien gefunden (405 oder 709 nm fehlt) – Lampe näher an den Spalt" % len(gefunden)
+	return sorted(gefunden), umgedreht
+
+
+def position_streuung(profile, px):
+	"""Streuung der Linienlage ueber 4 Teilmittel der Einzelbilder (Pixel)."""
+	lagen = []
+	for teil in np.array_split(np.asarray(profile), 4):
+		s = untergrund_abziehen(teil.mean(axis=0))
+		lo, hi = max(0, int(px) - 6), min(len(s), int(px) + 7)
+		lagen.append(schwerpunkt(s, lo + int(np.argmax(s[lo:hi]))))
+	return float(np.std(lagen))
+
+
+def cfl_bild(profil, gefunden, wl=None):
+	"""Profil mit markierten, beschrifteten Linien (rot: Restfehler ueber Toleranz)."""
+	b = profil_bild(np.asarray(profil) / max(float(np.max(profil)), 1e-9) * 240, farbe=(0, 0, 0))
+	for k, (px, nm, name, tol, _) in enumerate(gefunden):
+		x = int(px * (W - 1) / (kamera.FRAME_W - 1))
+		rest = float(np.interp(px, np.arange(len(wl)), wl)) - nm if wl is not None else 0.0
+		farbe = (0, 0, 220) if abs(rest) > tol else (0, 140, 0)
+		cv2.line(b, (x, 30), (x, b.shape[0]), farbe, 1)
+		y = 22 + (k % 2) * 18  # Beschriftung abwechselnd hoch/tief, damit nichts ueberlappt
+		cv2.putText(b, "%d" % round(nm), (max(0, x - 14), y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, farbe, 1, cv2.LINE_AA)
+	return b
+
+
+def mitteln_einzeln(ui, bel, spiegeln, text, n=20):
+	"""n Einzelprofile + hellster Wert je Spalte (fuer Mittelwert und Streuung)."""
+	profile, kmax = [], np.zeros(kamera.FRAME_W)
+	for k in range(n):
+		p, km = messen_spalten(bel, spiegeln)
+		profile.append(np.array(p, dtype=float))
+		kmax = np.maximum(kmax, km)
+		if k % 5 == 0:
+			ui.zeigen(TITEL_CFL, [text, "Messe … %d von %d Bildern (%.1f ms)" % (k, n, bel.us / 1000)], None, [])
+	return np.array(profile), kmax
+
+
+def schritt_leuchtstofflampe(ui, cam, bel, spiegeln):
+	"""Wellenlaengen-Kalibrierung mit den Linien einer Leuchtstofflampe.
+	Rueckgabe: (punkte, spiegeln, info) oder None (Abbruch). punkte = [(px, nm, streuung_px)]."""
+	while True:
+		p, km = messen_spalten(bel, spiegeln)
+		aus = float(km.max())
+		if aus >= 250:
+			bel.frei_setzen(bel.us * 0.5)
+		elif aus < 100:
+			bel.frei_setzen(bel.us * 1.6)
+		vorschau = linien_suchen(p)
+		ui.zeigen(TITEL_CFL,
+		          ["Leuchtstofflampe (Energiesparlampe) direkt vor den Spalt, vorher 3 min einbrennen lassen.",
+		           "Die Belichtung wird automatisch gewählt: kurz für die hellen, lang für die schwachen Linien.",
+		           "Vorschau %.1f ms · Spitze %d · %d Linien erkannt" % (bel.us / 1000, aus, len(vorschau)),
+		           "Laser und LED werden für die Wellenlängen nicht mehr gebraucht."],
+		          profil_bild(p, farbe=(0, 90, 200)),
+		          [("abbruch", "Abbrechen", "rot"), ("messen", "Messen", "gruen" if len(vorschau) >= 3 else "grau")])
+		t = ui.taste()
+		if t == "abbruch":
+			return None
+		if t != "messen" or len(vorschau) < 3:
+			continue
+
+		if einregeln(ui, bel, spiegeln, np.arange(kamera.FRAME_W), "Messung 1 von 2 (kurz)", TITEL_CFL) is None:
+			return None
+		kurz_einzeln, kmax_kurz = mitteln_einzeln(ui, bel, spiegeln, "Messung 1 von 2 (kurz)")
+		us_kurz = bel.us
+		if kmax_kurz.max() >= 250:
+			continue  # doch uebersteuert -> wieder live
+		bel.frei_setzen(us_kurz * LANG_FAKTOR)
+		lang_einzeln, kmax_lang = mitteln_einzeln(ui, bel, spiegeln, "Messung 2 von 2 (lang, ×%d)" % LANG_FAKTOR)
+		bel.frei_setzen(us_kurz)
+		kurz, lang = kurz_einzeln.mean(axis=0), lang_einzeln.mean(axis=0)
+
+		gefunden, info = cfl_zuordnen(kurz, lang, kmax_lang)
+		if gefunden is None:
+			ui.zeigen(TITEL_CFL, ["Zuordnung fehlgeschlagen:", info, "Kurz %.1f ms · lang %.1f ms" % (us_kurz / 1000, us_kurz * LANG_FAKTOR / 1000)],
+			          profil_bild(kurz, farbe=(0, 0, 200)), [("abbruch", "Abbrechen", "rot"), ("nochmal", "Nochmal", "gruen")])
+			while True:
+				t = ui.taste()
+				if t == "abbruch":
+					return None
+				if t == "nochmal":
+					break
+				cv2.waitKey(30)
+			continue
+		umgedreht = info
+		n = kamera.FRAME_W
+		if umgedreht:
+			# Blau muss links liegen: Spiegelung umkehren, Positionen und Profile mitdrehen
+			spiegeln = not spiegeln
+			gefunden = sorted((n - 1 - g[0],) + tuple(g[1:]) for g in gefunden)
+			kurz, lang = kurz[::-1], lang[::-1]
+			kurz_einzeln, lang_einzeln = kurz_einzeln[:, ::-1], lang_einzeln[:, ::-1]
+		punkte = []
+		for px, nm, name, tol, _ in gefunden:
+			welche = [l[2] for l in LINIEN_CFL if l[0] == nm][0]
+			punkte.append((px, nm, position_streuung(kurz_einzeln if welche == "kurz" else lang_einzeln, px)))
+		from specFunctions import zuordnung_berechnen
+		wl, art = zuordnung_berechnen([q[0] for q in punkte], [q[1] for q in punkte], n)
+		rest = [float(np.interp(px, np.arange(n), wl)) - nm for px, nm, _, _, _ in gefunden]
+		zu_gross = [g[2] for g, r in zip(gefunden, rest) if abs(r) > g[3]]
+		steigung = (wl[-1] - wl[0]) / (n - 1)
+		if art != "parabel":
+			bewertung = "WARNUNG: Zuordnung nicht eindeutig (%s) – Linien prüfen, nochmal messen" % art
+		elif zu_gross:
+			bewertung = "WARNUNG: Restfehler zu groß bei %s – nochmal messen" % ", ".join(zu_gross)
+		else:
+			bewertung = "gut · Achse %.0f–%.0f nm · Ø %.3f nm/px" % (wl[0], wl[-1], steigung)
+		reste = ["%s: %+.1f" % (g[2].split()[1], r) for g, r in zip(gefunden, rest)]
+		ui.zeigen(TITEL_CFL,
+		          ["%d Linien gefunden%s. Restfehler in nm:" % (len(gefunden), " (Spiegelung umgekehrt)" if umgedreht else ""),
+		           " · ".join(reste),
+		           "Streuung max. %.1f px · kurz %.1f ms, lang %.1f ms" % (max(q[2] for q in punkte), us_kurz / 1000, us_kurz * LANG_FAKTOR / 1000),
+		           bewertung],
+		          cfl_bild(kurz, gefunden, wl), [("nochmal", "Nochmal", "grau"), ("weiter", "Weiter", "gruen")])
+		while True:
+			t = ui.taste()
+			if t == "weiter":
+				info = {"linien": [{"name": g[2], "px": round(g[0], 2), "nm": g[1], "rest_nm": round(r, 2)} for g, r in zip(gefunden, rest)],
+				        "belichtung_us": us_kurz, "lang_faktor": LANG_FAKTOR, "art": art,
+				        "kurz": np.round(kurz, 2).tolist(), "lang": np.round(lang, 2).tolist()}
+				return punkte, spiegeln, info
+			if t == "nochmal":
+				break
+			cv2.waitKey(30)
+
+
+def schritt_kontrolle(ui, cam, bel, spiegeln, wl):
+	"""Optional: Laser (oder andere bekannte Linie) messen und nur anzeigen, welche Wellenlaenge
+	die neue Achse ihr gibt. Rueckgabe: Liste gemerkter Werte (nm) oder None (Abbruch)."""
+	gemerkt = []
+	while True:
+		p, aus = messen(bel, spiegeln)
+		px, hoehe = linie_finden(p)
+		nm = float(np.interp(px, np.arange(len(wl)), wl)) if px is not None else None
+		text = ("Linie bei %.1f px = %.1f nm" % (px, nm)) if px is not None else "keine Linie erkannt"
+		ui.zeigen("Schritt 3 von %d: Kontrolle mit Laser (optional)" % GESAMT,
+		          ["Roter oder grüner Laser aufs Butterbrotpapier vor dem Spalt. Nicht ins Okular schauen!",
+		           "Erwartet: roter Laser ≈ 649 nm, grüner Laser ≈ 513 nm (Diodenlaser, nicht 532).",
+		           bel.text(aus),
+		           text + (("   · gemerkt: " + ", ".join("%.1f" % g for g in gemerkt)) if gemerkt else "")],
+		          profil_bild(p, px, text=text),
+		          [("abbruch", "Abbrechen", "rot"), ("dunkler", "Dunkler", "blau"), ("heller", "Heller", "blau"),
+		           ("merken", "Merken", "grau" if nm is None else "gruen"), ("weiter", "Weiter", "gruen")])
+		t = ui.taste()
+		bel.taste(t)
+		if t == "abbruch":
+			return None
+		if t == "merken" and nm is not None and aus < 245:
+			gemerkt.append(nm)
+		if t == "weiter":
+			return gemerkt
+
+
 def zuordnung(punkte):
 	"""Wellenlaenge je Pixel aus den Kalibrierpunkten: linear (2) bzw. Polynom 2. Grades (3)."""
 	from specFunctions import zuordnung_berechnen
@@ -400,7 +720,7 @@ def zuordnung(punkte):
 
 
 ZIEL = 200  # Ziel-Aussteuerung des hellsten Farbkanals bei der automatischen Belichtung
-TITEL_GL = "Schritt 5 von 6: Glühlampe (Normkurve)"
+TITEL_GL = "Schritt 4 von 5: Glühlampe (Normkurve)"
 
 
 def messen_spalten(bel, spiegeln):
@@ -409,14 +729,14 @@ def messen_spalten(bel, spiegeln):
 	return kamera.zeilenprofil(f), kamera.kanalmaximum(f)
 
 
-def einregeln(ui, bel, spiegeln, spalten, text):
+def einregeln(ui, bel, spiegeln, spalten, text, titel=None):
 	"""Belichtung automatisch so waehlen, dass der hellste Kanal in `spalten` bei ~ZIEL liegt.
 	Rueckgabe: True (fertig), None (Abbruch)."""
 	for runde in range(12):
 		p, km = messen_spalten(bel, spiegeln)
 		sockel = float(np.percentile(km, 3))
 		ist = float(km[spalten].max())
-		ui.zeigen(TITEL_GL, [text, "Belichtung wird eingeregelt … %.1f ms · Spitze %d (Ziel %d)" % (bel.us / 1000, ist, ZIEL)],
+		ui.zeigen(titel or TITEL_GL, [text, "Belichtung wird eingeregelt … %.1f ms · Spitze %d (Ziel %d)" % (bel.us / 1000, ist, ZIEL)],
 		          profil_bild(p, farbe=(0, 90, 200)), [("abbruch", "Abbrechen", "rot")])
 		if ui.taste() == "abbruch":
 			return None
@@ -475,7 +795,7 @@ def schritt_gluehlampe(ui, cam, bel, spiegeln, wl):
 	liefert Rot) und lang (Blau gut ausgesteuert). Eine Gluehlampe hat bei 420 nm nur
 	wenige Prozent ihrer Rot-Intensitaet; mit einer einzigen Belichtung lag Blau nur
 	2-3 Zaehlwerte ueber dem Sockel (27.09.)."""
-	temperatur = 2850  # 100-W-Gluehlampe: Abgleich auf LED 5000 K ergab 2871 K (Aufbau 04.10.; 02.10. noch 2506 K mit altem Aufbau)
+	temperatur = GLUEHLAMPE_K
 	blau = np.where(wl <= 480)[0]
 	if len(blau) < 10:
 		blau = np.arange(kamera.FRAME_W // 4)
@@ -645,7 +965,7 @@ def faktor_glaetten(wl, faktor, bezug=560.0):
 	return ergebnis / np.interp(bezug, wl[ok], ergebnis[ok])
 
 
-def speichern(crop, spiegeln, punkte, gluehlampe, wl):
+def speichern(crop, spiegeln, punkte, gluehlampe, wl, linien=None, kontrolle=None):
 	stempel = time.strftime("%Y%m%d-%H%M%S")
 	sicherung = os.path.join(ORDNER, "alt", stempel)
 	os.makedirs(sicherung, exist_ok=True)
@@ -676,7 +996,8 @@ def speichern(crop, spiegeln, punkte, gluehlampe, wl):
 	                  "verhaeltnis_lang_kurz": gluehlampe.get("verhaeltnis"),
 	                  "gemessen": np.round(gluehlampe["gemessen"], 2).tolist(),
 	                  "kurz": np.round(gluehlampe["kurz"], 2).tolist() if "kurz" in gluehlampe else None,
-	                  "lang": np.round(gluehlampe["lang"], 2).tolist() if "lang" in gluehlampe else None})
+	                  "lang": np.round(gluehlampe["lang"], 2).tolist() if "lang" in gluehlampe else None,
+	                  "leuchtstofflampe": linien, "kontrolle_nm": kontrolle})
 	with open(protokoll_pfad, "w") as f:
 		json.dump(protokoll, f)
 	return sicherung
@@ -725,17 +1046,19 @@ def zuschnitt_berechnen(crop, spiegeln, punkte):
 def main():
 	ui = Oberflaeche()
 	ui.zeigen("Kalibrierung des Spektrometers",
-	          ["Ablauf: 1 Ausschnitt · 2/3 Laser · 4 blauer Punkt · Zuschnitt (automatisch) · 5 Glühlampe · 6 Speichern",
-	           "Bereitlegen: weiße LED (Handylicht), beide Laser, Glühlampe ohne Dimmer.",
+	          ["Womit sollen die Wellenlängen kalibriert werden?",
+	           "Leuchtstofflampe: 6 Linien automatisch, genauer (± 1 nm). Danach Glühlampe.",
+	           "Laser + LED: grüner/roter Laser, LED-Blauspitze (± 5 nm im Blauen). Danach Glühlampe.",
 	           "Erst im letzten Schritt wird gespeichert, Abbrechen ist jederzeit möglich."],
-	          None, [("abbruch", "Abbrechen", "rot"), ("start", "Start", "gruen")])
+	          None, [("abbruch", "Abbrechen", "rot"), ("laser", "Laser + LED", "blau"), ("cfl", "Leuchtstofflampe", "gruen")])
 	while True:
-		t = ui.taste()
-		if t == "abbruch":
+		methode = ui.taste()
+		if methode == "abbruch":
 			return 1
-		if t == "start":
+		if methode in ("laser", "cfl"):
 			break
 		cv2.waitKey(30)
+	titel_setzen(methode)
 
 	crop = schritt_ausschnitt(ui)
 	if crop is None:
@@ -744,40 +1067,18 @@ def main():
 	spiegeln = kamera.SPIEGELN
 	cam = kamera.kamera_starten(10000, 4.0, 1050000, crop=crop)
 	bel = Belichtung(cam, stufe=6)
+	linien, kontrolle = None, None
 	try:
-		gruen = schritt_laser(ui, cam, bel, 2, "Grüner Laser", 532, spiegeln)
-		if gruen is None:
-			return 1
-		rot = schritt_laser(ui, cam, bel, 3, "Roter Laser", 650, spiegeln)
-		if rot is None:
-			return 1
-		# Blau muss links liegen: liegt Rot links von Gruen, Spiegelung umkehren
-		if rot[0] < gruen[0]:
-			spiegeln = not spiegeln
-			gruen = (kamera.FRAME_W - 1 - gruen[0],) + gruen[1:]
-			rot = (kamera.FRAME_W - 1 - rot[0],) + rot[1:]
-		if abs(rot[0] - gruen[0]) < 50:
-			ui.zeigen("Fehler", ["Grüne und rote Linie liegen zu dicht beieinander (%.0f / %.0f px)." % (gruen[0], rot[0]),
-			                     "Vermutlich wurde zweimal derselbe Laser gemessen. Bitte neu starten."], None,
-			          [("ende", "Beenden", "rot")])
-			while ui.taste() != "ende":
-				cv2.waitKey(30)
-			return 1
-		punkte = [gruen, rot]
-		blau_hinweis = "ohne blauen Punkt (linear)"
-		blau = schritt_blau(ui, cam, bel, spiegeln, gruen[0])
-		if blau is None:
-			return 1
-		if blau != "auslassen":
-			versuch = sorted([blau, gruen, rot])
-			wl_test = zuordnung(versuch)
-			if np.all(np.diff(wl_test) > 0) and blau[0] < gruen[0]:
-				punkte = versuch
-				from specFunctions import zuordnung_berechnen
-				art = zuordnung_berechnen([q[0] for q in versuch], [q[1] for q in versuch], kamera.FRAME_W)[1]
-				blau_hinweis = "Blau %.1f px = %d nm (%s)" % (blau[0], blau[1], "gekrümmt" if art == "parabel" else "abschnittsweise linear")
-			else:
-				blau_hinweis = "blauer Punkt verworfen (%.1f px liegt nicht links von Grün %.1f px)" % (blau[0], gruen[0])
+		if methode == "cfl":
+			ergebnis = schritt_leuchtstofflampe(ui, cam, bel, spiegeln)
+			if ergebnis is None:
+				return 1
+			punkte, spiegeln, linien = ergebnis
+		else:
+			ergebnis = wellenlaengen_laser(ui, cam, bel, spiegeln)
+			if ergebnis is None:
+				return 1
+			punkte, spiegeln, hinweis = ergebnis
 		# Bildausschnitt auf den sinnvollen Bereich zuschneiden (ersetzt zuschnitt.py)
 		crop_neu, umrechnen = zuschnitt_berechnen(crop, spiegeln, punkte)
 		zuschnitt_hinweis = "Ausschnitt unverändert"
@@ -788,10 +1089,9 @@ def main():
 			           "Alt %d,%d %dx%d  →  neu %d,%d %dx%d" % (tuple(crop) + tuple(crop_neu)),
 			           "Kamera startet neu …"], None, [])
 			punkte = sorted((umrechnen(q[0]),) + tuple(q[1:]) for q in punkte)
-			gruen = (umrechnen(gruen[0]),) + tuple(gruen[1:])
-			rot = (umrechnen(rot[0]),) + tuple(rot[1:])
-			if blau not in (None, "auslassen"):
-				blau_hinweis = blau_hinweis.replace("%.1f px" % blau[0], "%.1f px" % umrechnen(blau[0]))
+			if linien:
+				for l in linien["linien"]:
+					l["px"] = round(umrechnen(l["px"]), 2)
 			stufe = bel.stufe
 			cam.stop()
 			cam.close()
@@ -802,6 +1102,13 @@ def main():
 		wl = zuordnung(punkte)
 		steigung = (wl[-1] - wl[0]) / (kamera.FRAME_W - 1)
 
+		if methode == "cfl":
+			kontrolle = schritt_kontrolle(ui, cam, bel, spiegeln, wl)
+			if kontrolle is None:
+				return 1
+			rest_max = max(abs(l["rest_nm"]) for l in linien["linien"])
+			hinweis = "Leuchtstofflampe: %d Linien, Restfehler max. %.1f nm%s" % (len(punkte), rest_max,
+			          (" · Kontrolle: " + ", ".join("%.1f nm" % k for k in kontrolle)) if kontrolle else "")
 		gluehlampe = schritt_gluehlampe(ui, cam, bel, spiegeln, wl)
 		if gluehlampe is None:
 			return 1
@@ -809,9 +1116,9 @@ def main():
 		cam.stop()
 		cam.close()
 
-	ui.zeigen("Schritt 6 von 6: Zusammenfassung",
+	ui.zeigen("Schritt %d von %d: Zusammenfassung" % (GESAMT, GESAMT),
 	          ["Ausschnitt %d,%d  %dx%d   Spiegeln: %s · %s" % (tuple(crop) + ("ja" if spiegeln else "nein", zuschnitt_hinweis)),
-	           "Grün %.1f px = %d nm · Rot %.1f px = %d nm · %s" % (gruen[0], gruen[1], rot[0], rot[1], blau_hinweis),
+	           hinweis,
 	           "Achse %.0f–%.0f nm (Ø %.3f nm/px) · Glühlampe %d K, gültig %.0f–%.0f nm" % (wl[0], wl[-1], steigung, gluehlampe["temperatur"], *gluehlampe["bereich"]),
 	           "Speichern ersetzt die bisherige Kalibrierung (Sicherung in alt/)."],
 	          None, [("verwerfen", "Verwerfen", "rot"), ("speichern", "Speichern", "gruen")])
@@ -820,7 +1127,7 @@ def main():
 		if t == "verwerfen":
 			return 1
 		if t == "speichern":
-			sicherung = speichern(crop, spiegeln, punkte, gluehlampe, wl)
+			sicherung = speichern(crop, spiegeln, punkte, gluehlampe, wl, linien, kontrolle)
 			ui.zeigen("Kalibrierung gespeichert", ["Alte Dateien gesichert in:", sicherung,
 			                                       "Das Spektrometer startet gleich neu."], None, [])
 			time.sleep(2.5)

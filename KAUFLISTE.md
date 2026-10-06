@@ -1,6 +1,6 @@
 # Kaufliste
 
-Genau diese Teile stecken im Original-Aufbau. Preise schwanken (Stand: 04.10.2026).
+Genau diese Teile stecken im Original-Aufbau. Preise schwanken (Stand: 06.10.2026).
 
 > **Werbehinweis:** Die mit \* markierten Links sind Amazon-Partnerlinks (Werbelinks). Als Amazon-Partner verdiene ich an qualifizierten Verkäufen. Für dich ändert sich der Preis dadurch nicht.
 
@@ -18,10 +18,11 @@ Genau diese Teile stecken im Original-Aufbau. Preise schwanken (Stand: 04.10.202
 | Teil | Hinweis | ca. € | Link |
 |---|---|---|---|
 | Taschenspektroskop 55 mm („Juwelier-Spektroskop“) | Geradsicht-Prismenspektroskop mit Spalt | 36 | [Amazon\*](https://www.amazon.de/dp/B0788TLD1T?tag=johannesroe08-21) |
-| Laserpointer grün, 532 nm | Kalibrierpunkt Grün. **Nur Laserklasse 1/2 (< 1 mW)**, nie in Augen richten | 10 | [Amazon\*](https://www.amazon.de/s?k=Laserpointer+gr%C3%BCn+532nm+Klasse+2&tag=johannesroe08-21) |
-| Laserpointer rot, 650 nm | Kalibrierpunkt Rot, ebenfalls Klasse 1/2 | 8 | [Amazon\*](https://www.amazon.de/s?k=Laserpointer+rot+650nm+Klasse+2&tag=johannesroe08-21) |
-| Glühlampe 60–100 W, klar, E27 + Fassung | Referenz für die Empfindlichkeitskorrektur; ohne Dimmer betreiben | 5–10 | [Amazon\*](https://www.amazon.de/s?k=Gl%C3%BChbirne+100W+E27+klar&tag=johannesroe08-21) |
-| Weiße LED (z. B. Handylicht) | blauer Kalibrierpunkt (LED-Blauspitze ≈ 450 nm) | – | vorhanden |
+| Energiesparlampe Philips Genie 18 W E27, warmweiß | **Wellenlängen-Kalibrierung** (Linien 405–709 nm); jede Dreibanden-Energiesparlampe geht | 8 | [Amazon\*](https://www.amazon.de/dp/B0094DY2CG?tag=johannesroe08-21) |
+| Laserpointer grün | optional (Methode „Laser + LED“ oder Kontrolle). **Wellenlänge prüfen:** unser „532-nm“-Laser hatte ≈ 513 nm. **Nur Laserklasse 1/2 (< 1 mW)**, nie in Augen richten | 10 | [Amazon\*](https://www.amazon.de/s?k=Laserpointer+gr%C3%BCn+532nm+Klasse+2&tag=johannesroe08-21) |
+| Laserpointer rot, 650 nm | optional, ebenfalls Klasse 1/2 | 8 | [Amazon\*](https://www.amazon.de/s?k=Laserpointer+rot+650nm+Klasse+2&tag=johannesroe08-21) |
+| Glühlampe 100–200 W, klar, E27 + Fassung | Referenz für die Empfindlichkeitskorrektur; ohne Dimmer betreiben; Farbtemperatur mit einer bekannten Lampe abgleichen | 5–10 | [Amazon\*](https://www.amazon.de/s?k=Gl%C3%BChbirne+100W+E27+klar&tag=johannesroe08-21) |
+| Weiße LED (z. B. Handylicht) | nur Methode „Laser + LED“: Blauspitze ≈ 450 nm | – | vorhanden |
 
 ## Mechanik (3D-Druck)
 
